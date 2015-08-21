@@ -1,0 +1,63 @@
+#!/usr/bin/env node
+
+/*
+ *  domaincheck
+ *  https://github.com/npny/domaincheck
+ *  
+ *  Usage :
+ *    domaincheck word1 word2 word3 wordN [--plain]
+ *
+ *	Will match pairs of words with regular TLDs (.com, .org, .net, .io), and attempt to shorten names with other TLDs when possible (e.g. youtu.be)
+ *  For instance, "domaincheck you tube" will try youtube.com, youtube.org, youtu.be, tubeyou.io, [...]
+ *
+ *  Any DNS.NOTFOUND name is considered available and logged to the standard output
+ *  --plain gets you only the available names without formatting, if you want to use the raw list somewhere else
+ * 
+ *  Released under the MIT license
+ *  Pierre Boyer, 2015
+ */
+
+var dns = require("dns"), sys = require('sys');
+
+// Check for --plain flag
+var plainFlag = (process.argv.indexOf("--plain") > 0);
+if(plainFlag) process.argv.splice(process.argv.indexOf("--plain"), 1);
+
+
+var words = process.argv.slice(2);
+var regulartld = ["com", "org", "net", "io"];
+var cctld = ["com", "org", "net", "ac","ad","ae","af","ag","ai","al","am","an","ao","aq","ar","as","at","au","aw","ax","az","ba","bb","bd","be","bf","bg","bh","bi","bj","bm","bn","bo","bq","br","bs","bt","bv","bw","by","bz","ca","cc","cd","cf","cg","ch","ci","ck","cl","cm","cn","co","cr","cs","cu","cv","cw","cx","cy","cz","dd","de","dj","dk","dm","do","dz","ec","ee","eg","eh","er","es","et","eu","fi","fj","fk","fm","fo","fr","ga","gb","gd","ge","gf","gg","gh","gi","gl","gm","gn","gp","gq","gr","gs","gt","gu","gw","gy","hk","hm","hn","hr","ht","hu","id","ie","il","im","in","io","iq","ir","is","it","je","jm","jo","jp","ke","kg","kh","ki","km","kn","kp","kr","kw","ky","kz","la","lb","lc","li","lk","lr","ls","lt","lu","lv","ly","ma","mc","md","me","mg","mh","mk","ml","mm","mn","mo","mp","mq","mr","ms","mt","mu","mv","mw","mx","my","mz","na","nc","ne","nf","ng","ni","nl","no","np","nr","nu","nz","om","pa","pe","pf","pg","ph","pk","pl","pm","pn","pr","ps","pt","pw","py","qa","re","ro","rs","ru","rw","sa","sb","sc","sd","se","sg","sh","si","sj","sk","sl","sm","sn","so","sr","ss","st","su","sv","sx","sy","sz","tc","td","tf","tg","th","tj","tk","tl","tm","tn","to","tp","tr","tt","tv","tw","tz","ua","ug","uk","us","uy","uz","va","vc","ve","vg","vi","vn","vu","wf","ws","ye","yt","yu","za","zm","zr","zw"];
+
+
+// Loop through word pairs and build domain/tlds combinations
+for(var i in words) for(var j in words) if(words[i] != words[j])
+{
+	var domain = words[i] + words[j];
+
+	for(var k in regulartld)
+		checkAvailable(domain + '.' + regulartld[k]);
+
+	for(var k in cctld)
+	{
+		var tld = cctld[k];
+		if(domain.substr(-tld.length) == tld)
+			checkAvailable(domain.substr(0, domain.length - tld.length) + '.' + tld);
+	}
+}
+
+function checkAvailable(domain)
+{
+	if(plainFlag)
+		dns.resolve4(domain, function(e) {
+			if(e && e.errno == dns.NOTFOUND)
+				console.log(domain);
+		});
+	else
+		dns.resolve4(domain, function(e) {
+			if(e && e.errno == dns.NOTFOUND)
+				console.log(domain + "\t\033[32mAVAILABLE\033[m");
+			else
+				console.log(domain + "\t\033[31mUNAVAILABLE\033[m");
+		});
+}
+		
