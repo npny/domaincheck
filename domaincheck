@@ -5,46 +5,48 @@
  *  https://github.com/npny/domaincheck
  *  
  *  Usage :
- *    domaincheck word1 word2 word3 wordN [--plain]
+ *    domaincheck word1 word2 word3 wordN [-l | --list-available]
  *    domaincheck specificdomain.com
- *    domaincheck word1 word2 word3 wordN .co.uk .info .eu .biz 
+ *    domaincheck word1 word2 word3 wordN .co.uk .info .eu .biz
  *
- *  Will match pairs of keywords with regular TLDs (.com, .org, .net, .io), and attempt to shorten names with other TLDs when possible (e.g. youtu.be)
+ *  Will match pairs of keywords with regular TLDs (.com, .org, .net, .info, .io), and attempt to shorten names with other TLDs when possible (e.g. youtu.be)
  *  For instance, "domaincheck you tube" will try youtube.com, youtube.org, youtu.be, tubeyou.io, [...]
  *  You can also check directly for specific domains (e.g. "domaincheck google.com")
  *  Any DNS.NOTFOUND name is considered available and logged to the standard output
  *
- *  --plain or --available gets you only the available names without formatting, if you want to use the raw list somewhere else
+ *  -l or --list-available gets you only the available names without formatting, should you want to use the raw list somewhere else
  *  If you specify additional TLDs in the argument list, starting with a dot, they will be checked too.
  * 
  *  Released under the MIT license
  *  Pierre Boyer, 2015
  */
 
-var dns = require("dns"), sys = require('sys');
+const dns = require("dns");
 
-var keywords = [];
-var gTLD = ["com", "org", "net", "io"];
-var ccTLD = ["com", "org", "net", "ac","ad","ae","af","ag","ai","al","am","an","ao","aq","ar","as","at","au","aw","ax","az","ba","bb","bd","be","bf","bg","bh","bi","bj","bm","bn","bo","bq","br","bs","bt","bv","bw","by","bz","ca","cc","cd","cf","cg","ch","ci","ck","cl","cm","cn","co","cr","cs","cu","cv","cw","cx","cy","cz","dd","de","dj","dk","dm","do","dz","ec","ee","eg","eh","er","es","et","eu","fi","fj","fk","fm","fo","fr","ga","gb","gd","ge","gf","gg","gh","gi","gl","gm","gn","gp","gq","gr","gs","gt","gu","gw","gy","hk","hm","hn","hr","ht","hu","id","ie","il","im","in","io","iq","ir","is","it","je","jm","jo","jp","ke","kg","kh","ki","km","kn","kp","kr","kw","ky","kz","la","lb","lc","li","lk","lr","ls","lt","lu","lv","ly","ma","mc","md","me","mg","mh","mk","ml","mm","mn","mo","mp","mq","mr","ms","mt","mu","mv","mw","mx","my","mz","na","nc","ne","nf","ng","ni","nl","no","np","nr","nu","nz","om","pa","pe","pf","pg","ph","pk","pl","pm","pn","pr","ps","pt","pw","py","qa","re","ro","rs","ru","rw","sa","sb","sc","sd","se","sg","sh","si","sj","sk","sl","sm","sn","so","sr","ss","st","su","sv","sx","sy","sz","tc","td","tf","tg","th","tj","tk","tl","tm","tn","to","tp","tr","tt","tv","tw","tz","ua","ug","uk","us","uy","uz","va","vc","ve","vg","vi","vn","vu","wf","ws","ye","yt","yu","za","zm","zr","zw"];
-var plainFlag = false, pendingRequests = 0;
+const mainTLD = ["com", "org", "net", "info", "io"];
+const ccTLD = ["ac","ad","ae","af","ag","ai","al","am","an","ao","aq","ar","as","at","au","aw","ax","az","ba","bb","bd","be","bf","bg","bh","bi","bj","bm","bn","bo","bq","br","bs","bt","bv","bw","by","bz","ca","cc","cd","cf","cg","ch","ci","ck","cl","cm","cn","co","cr","cs","cu","cv","cw","cx","cy","cz","dd","de","dj","dk","dm","do","dz","ec","ee","eg","eh","er","es","et","eu","fi","fj","fk","fm","fo","fr","ga","gb","gd","ge","gf","gg","gh","gi","gl","gm","gn","gp","gq","gr","gs","gt","gu","gw","gy","hk","hm","hn","hr","ht","hu","id","ie","il","im","in","io","iq","ir","is","it","je","jm","jo","jp","ke","kg","kh","ki","km","kn","kp","kr","kw","ky","kz","la","lb","lc","li","lk","lr","ls","lt","lu","lv","ly","ma","mc","md","me","mg","mh","mk","ml","mm","mn","mo","mp","mq","mr","ms","mt","mu","mv","mw","mx","my","mz","na","nc","ne","nf","ng","ni","nl","no","np","nr","nu","nz","om","pa","pe","pf","pg","ph","pk","pl","pm","pn","pr","ps","pt","pw","py","qa","re","ro","rs","ru","rw","sa","sb","sc","sd","se","sg","sh","si","sj","sk","sl","sm","sn","so","sr","ss","st","su","sv","sx","sy","sz","tc","td","tf","tg","th","tj","tk","tl","tm","tn","to","tp","tr","tt","tv","tw","tz","ua","ug","uk","us","uy","uz","va","vc","ve","vg","vi","vn","vu","wf","ws","ye","yt","yu","za","zm","zr","zw"];
+const extraTLD = ["adult","aero","agency","airforce","alsace","apartments","archi","army","asia","associates","attorney","auction","audio","auto","band","bar","bargains","beer","best","bet","bid","bike","bingo","bio","biz","black","blue","boutique","build","builders","business","buzz","bzh","cab","cafe","camera","camp","capital","car","cards","care","career","careers","cars","casa","cash","casino","cat","catering","center","ceo","chat","cheap","christmas","church","city","claims","cleaning","click","clinic","clothing","cloud","club","coach","codes","coffee","college","community","company","computer","condos","construction","consulting","contractors","cooking","cool","coop","country","coupons","courses","credit","cricket","cruises","dance","date","dating","deals","degree","delivery","democrat","dental","dentist","desi","design","diamonds","diet","digital","direct","directory","discount","dog","domains","download","durban","earth","education","email","energy","engineer","engineering","enterprises","equipment","estate","eus","events","exchange","expert","exposed","express","fail","faith","family","fans","farm","fashion","film","finance","financial","fish","fishing","fit","fitness","flights","florist","flowers","football","forsale","foundation","frl","fund","furniture","fyi","gal","gallery","games","garden","gent","gift","gifts","gives","glass","global","gold","golf","graphics","gratis","green","gripe","group","guide","guitars","guru","haus","healthcare","help","hiphop","hiv","hockey","holdings","holiday","horse","host","hosting","house","how","immo","industries","info","ink","institute","insure","international","investments","jewelry","jobs","kim","kitchen","kiwi","koeln","kyoto","land","lat","law","lawyer","lease","legal","lgbt","life","lighting","limited","limo","link","live","loan","loans","lol","london","love","ltd","ltda","management","market","marketing","mba","media","melbourne","memorial","men","menu","miami","mobi","moda","moe","mom","money","mortgage","moscow","name","navy","network","news","ngo","ninja","nrw","nyc","nz","okinawa","one","onl","online","organic","paris","partners","parts","party","photo","photography","photos","physio","pics","pictures","pink","pizza","place","plumbing","plus","poker","porn","press","pro","productions","promo","properties","property","pub","qpon","quebec","racing","recipes","red","rehab","rent","rentals","repair","report","republican","rest","restaurant","review","reviews","rich","rip","rocks","rodeo","run","sale","salon","sarl","school","science","scot","security","services","sexy","shoes","shop","shopping","show","singles","site","ski","soccer","social","software","solar","solutions","soy","space","store","stream","studio","study","style","supplies","supply","support","surf","surgery","sydney","systems","taipei","tattoo","tax","taxi","team","tech","technology","tennis","theater","theatre","tips","tires","today","tokyo","tools","top","tours","town","toys","trade","trading","training","travel","tube","university","uno","vacations","vegas","ventures","vet","video","villas","vin","vip","vision","vodka","vote","voting","voto","voyage","wales","wang","watch","webcam","website","wed","wedding","wien","wiki","win","wine","work","works","world","wtf","xxx","xyz","yoga","zone"];
+const allTLD = [].concat(mainTLD, ccTLD, extraTLD);
+let listAvailableFlag = false, pendingRequests = 0, keywords = [];
 
 
 // Read arguments
-process.argv.slice(2).forEach(function(v){
+process.argv.slice(2).forEach(word => {
 	
 	// Check for the --plain flag
-	if(v == "--plain" || v == "--available") plainFlag = true;
+	if(word == "-l" || word == "--list-available")
+		listAvailableFlag = true;
 
-	// Freestanding TLD, add it to the list of TLDs to check
-	else if(v[0] == '.')
-		gTLD.push( v.slice(1) );
+	// If it starts with a dot, it's a freestanding TLD, add it to the list of TLDs to check
+	else if(word[0] == '.')
+		allTLD.push(v.slice(1));
 	
-	// Fully specified domain to be checked directly
-	else if(v.indexOf('.') > 0)
-		checkAvailable(v);
+	// If it contains dots, it's a fully specified domain to be checked directly
+	else if(word.indexOf('.') > 0)
+		checkAvailable(word);
 	
-	// Regular keyword
-	else keywords.push(v);
+	// Otherwise it's a regular keyword
+	else keywords.push(word);
 
 });
 
@@ -55,38 +57,28 @@ for(var i in keywords) for(var j in keywords)
 	var domain = keywords[i] + keywords[j];
 	if(keywords[i] == keywords[j]) domain = keywords[i];
 
-	for(var k in gTLD)
-		checkAvailable(domain + '.' + gTLD[k]);
-
-	for(var k in ccTLD)
-	{
-		var tld = ccTLD[k];
-		if(domain.substr(-tld.length) == tld)
-			checkAvailable(domain.substr(0, domain.length - tld.length) + '.' + tld);
-	}
+	mainTLD.forEach(tld => checkAvailable(domain + '.' + tld));
+	allTLD.forEach(tld => {
+		if(domain.slice(-tld.length) == tld)
+			checkAvailable(domain.slice(0, -tld.length) + '.' + tld);
+	});
 }
 
 
-function checkAvailable(domain)
-{
+function checkAvailable(domain) {
+
 	pendingRequests++;
 
-	dns.resolve4(domain, function(e){
-		if(plainFlag)
-		{
-			if(e && e.errno == dns.NOTFOUND)
-				console.log(domain);
-		}
-		else
-		{
-			if(e && e.errno == dns.NOTFOUND)
-				console.log(domain + "\t\033[32mAVAILABLE\033[m");
-			else
-				console.log(domain + "\t\033[31mUNAVAILABLE\033[m");
-		}
+	dns.resolve4(domain, e => {
+		const available = e && e.errno == dns.NOTFOUND;
+
+		if( listAvailableFlag  &&  available) console.log(domain);
+		if(!listAvailableFlag  &&  available) console.log(domain + "\t\033[32mAVAILABLE\033[m");
+		if(!listAvailableFlag  && !available) console.log(domain + "\t\033[31mUNAVAILABLE\033[m");
 
 		pendingRequests--;
 		if(pendingRequests == 0)
 			process.exit(0);
 	});
+
 }		
