@@ -1,4 +1,4 @@
-![domaincheck word1 word2 wordN [--list-available]](http://i.imgur.com/eAPLlhW.gif)
+<p align="center"><img src="http://i.imgur.com/eAPLlhW.gif" alt="domaincheck word1 word2 wordN [--list-available]" /></p>
 
 Install:
 ```shell
